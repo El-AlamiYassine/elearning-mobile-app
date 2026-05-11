@@ -1,24 +1,23 @@
 import 'package:dio/dio.dart';
 import '../../../core/services/api_service.dart';
-import '../models/course_model.dart';
-import '../models/student_profile.dart';
+import '../models/StudentSummary.dart';
 
 class StudentService {
   final ApiService _apiService = ApiService();
 
-  Future<List<CourseModel>> getEnrolledCourses() async {
+  Future<StudentSummary> getDashboardSummary() async {
     try {
       // Assuming endpoint is /student/courses or /courses/enrolled
-      Response response = await _apiService.dio.get('/student/courses');
+      Response response = await _apiService.dio.get('/student/dashboard/summary');
       
       if (response.statusCode == 200) {
-        List<dynamic> data = response.data;
-        return data.map((json) => CourseModel.fromJson(json)).toList();
+        Map<String, dynamic> data = response.data;
+        return StudentSummary.fromJson(data);
       }
-      return [];
+      return StudentSummary.fromJson({});
     } catch (e) {
       print('Error fetching courses: $e');
-      return [];
+      return StudentSummary.fromJson({});
     }
   }
 }

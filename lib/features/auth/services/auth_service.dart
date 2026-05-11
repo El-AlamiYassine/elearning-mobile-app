@@ -16,7 +16,6 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
-        print("Login successful: ${response.data}");
         return AuthResponse.fromJson(response.data);
       }
 

@@ -13,6 +13,7 @@ dependencies:
   dio: ^5.9.2  # HTTP client for Dart, used for making API requests.
   shared_preferences: ^2.5.5 # Used for storing simple data on the device, such as user preferences or authentication tokens.
   go_router: ^17.2.3 # A routing package for Flutter that simplifies navigation and deep linking.
+  google_fonts: ^8.1.0 # Provides access to a wide range of fonts from Google Fonts.
 
 dev_dependencies:
   flutter_test:

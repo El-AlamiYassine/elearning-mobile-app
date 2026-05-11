@@ -27,7 +27,7 @@ class ElearningApp extends StatelessWidget {
             title: 'E-Learning App',
             theme: ThemeData(primarySwatch: Colors.blue),
             home: const HomeScreen(),
-            initialRoute: "/",
+            initialRoute: AppRoutes.home,
             routes: {
               AppRoutes.home: (context) => const HomeScreen(),
 
