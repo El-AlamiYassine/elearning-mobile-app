@@ -44,6 +44,7 @@ class ElearningApp extends StatelessWidget {
               AppRoutes.adminDashboard: (context) => const AdminDashboard(),
 
               AppRoutes.studentCourses: (context) => const StudentCoursPage(),
+              
               AppRoutes.explorer: (context) => const ExplorerScreen(),
             },
           );
