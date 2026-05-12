@@ -6,23 +6,8 @@ import '../providers/student_provider.dart';
 import '../models/StudentSummary.dart';
 import '../models/CourseProgress.dart';
 import '../../../core/services/storage_service.dart';
-
-// ─── Color tokens ────────────────────────────────────────────────────────────
-class _C {
-  static const navy = Color(0xFF1A1F3C);
-  static const navyLight = Color(0xFF2D3566);
-  static const indigo = Color(0xFF7B9FFF);
-  static const indigoBg = Color(0xFFEEF2FF);
-  static const indigoText = Color(0xFF4B5FCC);
-  static const teal = Color(0xFF5DCAA5);
-  static const tealBg = Color(0xFFE1F5EE);
-  static const tealText = Color(0xFF0F6E56);
-  static const pageBg = Color(0xFFF5F6FB);
-  static const card = Colors.white;
-  static const cardBorder = Color(0xFFECEEF5);
-  static const subText = Color(0xFF9095A8);
-  static const bodyText = Color(0xFF2D3142);
-}
+import '../../../core/constants/colors.dart' as _C;
+import '../../../core/constants/BottomNavStudent.dart';
 
 class StudentDashboard extends StatefulWidget {
   const StudentDashboard({Key? key}) : super(key: key);
@@ -51,12 +36,12 @@ class _StudentDashboardState extends State<StudentDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _C.pageBg,
+      backgroundColor: _C.Colors.pageBg,
       body: Consumer<StudentProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading && provider.profile == null) {
             return const Center(
-              child: CircularProgressIndicator(color: _C.indigo),
+              child: CircularProgressIndicator(color: _C.Colors.indigo),
             );
           }
 
@@ -89,7 +74,9 @@ class _StudentDashboardState extends State<StudentDashboard> {
           );
         },
       ),
-      bottomNavigationBar: _BottomNav(),
+      bottomNavigationBar: const Bottomnavstudent(
+        currentIndex: 0,
+      ),
     );
   }
 
@@ -104,7 +91,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
       floating: false,
       pinned: true,
       elevation: 0,
-      backgroundColor: _C.navy,
+      backgroundColor: _C.Colors.navy,
       flexibleSpace: FlexibleSpaceBar(
         collapseMode: CollapseMode.pin,
         background: _HeroBg(
@@ -133,21 +120,21 @@ class _StudentDashboardState extends State<StudentDashboard> {
       padding: const EdgeInsets.all(36),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: _C.card,
+        color: _C.Colors.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _C.cardBorder),
+        border: Border.all(color: _C.Colors.cardBorder),
       ),
       child: Column(
         children: [
           Icon(
             Icons.menu_book_rounded,
             size: 56,
-            color: _C.subText.withOpacity(.35),
+            color: _C.Colors.subText.withOpacity(.35),
           ),
           const SizedBox(height: 14),
           Text(
             'Aucun cours pour le moment',
-            style: TextStyle(fontSize: 15, color: _C.subText),
+            style: TextStyle(fontSize: 15, color: _C.Colors.subText),
           ),
         ],
       ),
@@ -170,19 +157,19 @@ class _HeroBg extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: _C.navy,
+      color: _C.Colors.navy,
       child: Stack(
         children: [
           // Decorative circles
           Positioned(
             top: -50,
             right: -50,
-            child: _Circle(size: 180, color: _C.navyLight),
+            child: _Circle(size: 180, color: _C.Colors.navyLight),
           ),
           Positioned(
             bottom: -20,
             left: 60,
-            child: _Circle(size: 110, color: const Color(0xFF252B52)),
+            child: _Circle(size: 110, color: _C.Colors.navyLight),
           ),
           // Content
           SafeArea(
@@ -250,7 +237,7 @@ class _HeroBg extends StatelessWidget {
                           icon: Icons.play_arrow_rounded,
                           value: '${dashboardData?.enrolledCoursesCount ?? 0}',
                           label: 'En cours',
-                          color: _C.indigo,
+                          color: _C.Colors.indigo,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -259,7 +246,7 @@ class _HeroBg extends StatelessWidget {
                           icon: Icons.check_circle_outline_rounded,
                           value: '${dashboardData?.completedCoursesCount ?? 0}',
                           label: 'Terminés',
-                          color: _C.teal,
+                          color: _C.Colors.teal,
                         ),
                       ),
                     ],
@@ -336,9 +323,9 @@ class _CourseActivityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: _C.card,
+        color: _C.Colors.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _C.cardBorder),
+        border: Border.all(color: _C.Colors.cardBorder),
       ),
       child: Column(
         children: items
@@ -403,13 +390,13 @@ class _CourseProgressRow extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: _C.bodyText,
+                    color: _C.Colors.bodyText,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${item.instructorName} · ${item.completedLessons}/${item.totalLessons} leçons',
-                  style: const TextStyle(fontSize: 11, color: _C.subText),
+                  style: const TextStyle(fontSize: 11, color: _C.Colors.subText),
                 ),
               ],
             ),
@@ -425,7 +412,7 @@ class _CourseProgressRow extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: percent >= 100 ? _C.tealBg : _C.indigoBg,
+                  color: percent >= 100 ? _C.Colors.tealBg : _C.Colors.indigoBg,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -433,7 +420,7 @@ class _CourseProgressRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: percent >= 100 ? _C.tealText : _C.indigoText,
+                    color: percent >= 100 ? _C.Colors.tealText : _C.Colors.indigoText,
                   ),
                 ),
               ),
@@ -443,7 +430,7 @@ class _CourseProgressRow extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: percent / 100.0,
                   backgroundColor: Colors.grey.shade200,
-                  color: percent >= 100 ? _C.teal : _C.indigo,
+                  color: percent >= 100 ? _C.Colors.teal : _C.Colors.indigo,
                   minHeight: 6,
                 ),
               ),
@@ -468,55 +455,13 @@ class _SectionLabel extends StatelessWidget {
       style: const TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.w500,
-        color: _C.subText,
+        color: _C.Colors.subText,
         letterSpacing: .8,
       ),
     );
   }
 }
 
-// ─── Bottom nav ───────────────────────────────────────────────────────────────
-class _BottomNav extends StatelessWidget {
-  const _BottomNav();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFECEEF5))),
-      ),
-      child: BottomNavigationBar(
-        currentIndex: 0,
-        backgroundColor: Colors.transparent,
-        selectedItemColor: _C.navy,
-        unselectedItemColor: _C.subText,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
-        elevation: 0,
-        selectedLabelStyle: const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-        ),
-        unselectedLabelStyle: const TextStyle(fontSize: 10),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_rounded),
-            label: 'Accueil',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.play_circle_outline_rounded),
-            label: 'Cours',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline_rounded),
-            label: 'Profil',
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 class _Circle extends StatelessWidget {
@@ -553,7 +498,7 @@ class _ErrorState extends StatelessWidget {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: onRetry,
-            style: ElevatedButton.styleFrom(backgroundColor: _C.navy),
+            style: ElevatedButton.styleFrom(backgroundColor: _C.Colors.navy),
             child: const Text('Réessayer'),
           ),
         ],

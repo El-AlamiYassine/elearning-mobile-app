@@ -1,3 +1,4 @@
+import 'package:elearning/features/student/screens/student_cours.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'features/home/screens/home_screen.dart';
@@ -9,6 +10,7 @@ import 'features/student/screens/student_dashboard.dart';
 import 'features/teacher/screens/teacher_dashboard.dart';
 import 'features/admin/screens/admin_dashboard.dart';
 import 'features/student/providers/student_provider.dart';
+import 'features/student/screens/explorer_screen.dart';
 
 class ElearningApp extends StatelessWidget {
   const ElearningApp({super.key});
@@ -35,14 +37,14 @@ class ElearningApp extends StatelessWidget {
 
               AppRoutes.register: (context) => const RegisterScreen(),
 
-              AppRoutes.studentDashboard: (context) =>
-                  const StudentDashboard(),
+              AppRoutes.studentDashboard: (context) => const StudentDashboard(),
 
-              AppRoutes.teacherDashboard: (context) =>
-                  const TeacherDashboard(),
+              AppRoutes.teacherDashboard: (context) => const TeacherDashboard(),
 
-              AppRoutes.adminDashboard: (context) =>
-                  const AdminDashboard(),
+              AppRoutes.adminDashboard: (context) => const AdminDashboard(),
+
+              AppRoutes.studentCourses: (context) => const StudentCoursPage(),
+              AppRoutes.explorer: (context) => const ExplorerScreen(),
             },
           );
         },
