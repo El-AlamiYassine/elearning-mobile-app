@@ -7,6 +7,7 @@ import '../models/StudentSummary.dart';
 import '../models/student_profile.dart';
 import '../services/student_service.dart';
 import '../../../core/services/storage_service.dart';
+import '../../models/Certificate.dart';
 
 class StudentProvider extends ChangeNotifier {
   final StudentService _studentService = StudentService();
@@ -16,6 +17,7 @@ class StudentProvider extends ChangeNotifier {
   String? errorMessage;
   List<Category> categories = [];
   List<Course> allCourses = [];
+  List<Certificate> certificates = [];
 
   Future<void> fetchDashboardData() async {
     isLoading = true;
@@ -90,6 +92,22 @@ class StudentProvider extends ChangeNotifier {
       );
     } catch (e) {
       errorMessage = 'Erreur lors du chargement des cours.';
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchCertificates() async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+
+      certificates = await _studentService.getCertificates();
+      print('Certificates fetched: $certificates');
+    } catch (e) {
+      errorMessage = 'Erreur lors du chargement des certificats.';
     } finally {
       isLoading = false;
       notifyListeners();

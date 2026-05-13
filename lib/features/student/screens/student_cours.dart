@@ -121,7 +121,7 @@ class _StudentCoursPageState extends State<StudentCoursPage> {
           );
         },
       ),
-      bottomNavigationBar: const Bottomnavstudent(
+      bottomNavigationBar: const BottomNavStudent(
         currentIndex: 1,
       ),
     );

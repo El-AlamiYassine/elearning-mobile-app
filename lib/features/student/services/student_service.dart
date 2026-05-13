@@ -1,5 +1,6 @@
 import 'dart:core';
 import 'package:dio/dio.dart';
+import 'package:elearning/features/models/Certificate.dart';
 import 'package:elearning/features/student/models/Category.dart';
 import '../../../core/services/api_service.dart';
 import '../models/StudentSummary.dart';
@@ -64,6 +65,23 @@ class StudentService {
       return [];
     } catch (e) {
       print('Error fetching courses: $e');
+      return [];
+    }
+  }
+
+  Future<List<Certificate>> getCertificates() async {
+    try {
+      final response = await _apiService.dio.get('/student/certificates');
+
+      if (response.statusCode == 200) {
+        final List data = response.data;
+
+        return data.map((json) => Certificate.fromJson(json)).toList();
+      }
+
+      return [];
+    } catch (e) {
+      print('Error fetching certificates: $e');
       return [];
     }
   }

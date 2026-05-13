@@ -11,6 +11,7 @@ import 'features/teacher/screens/teacher_dashboard.dart';
 import 'features/admin/screens/admin_dashboard.dart';
 import 'features/student/providers/student_provider.dart';
 import 'features/student/screens/explorer_screen.dart';
+import 'features/student/screens/certificate_screen.dart';
 
 class ElearningApp extends StatelessWidget {
   const ElearningApp({super.key});
@@ -45,7 +46,8 @@ class ElearningApp extends StatelessWidget {
 
               AppRoutes.studentCourses: (context) => const StudentCoursPage(),
               
-              AppRoutes.explorer: (context) => const ExplorerScreen(),
+              AppRoutes.explorer: (context) => const ExplorerPage(),
+              AppRoutes.certificates: (context) => const CertificateScreen(),
             },
           );
         },

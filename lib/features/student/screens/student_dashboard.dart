@@ -74,7 +74,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
           );
         },
       ),
-      bottomNavigationBar: const Bottomnavstudent(
+      bottomNavigationBar: const BottomNavStudent(
         currentIndex: 0,
       ),
     );

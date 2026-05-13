@@ -1,3 +1,6 @@
+import 'package:elearning/features/student/models/Category.dart';
+import 'package:elearning/features/models/user_model.dart';
+
 class Course {
   final int id;
   final String titre;
@@ -8,8 +11,8 @@ class Course {
   final double? prix;
 
   // Relations
-  final int formateurId;
-  final int? categorieId;
+  final User formateur;
+  final Category? categorie;
 
   const Course({
     required this.id,
@@ -19,8 +22,8 @@ class Course {
     required this.statut,
     required this.dateCreation,
     this.prix,
-    required this.formateurId,
-    this.categorieId,
+    required this.formateur,
+    this.categorie,
   });
 
   factory Course.fromJson(Map<String, dynamic> json) {
@@ -36,12 +39,10 @@ class Course {
           : null,
 
       // Relations
-      formateurId: json['formateur'] != null
-          ? json['formateur']['id']
-          : 0,
+      formateur: User.fromJson(json['formateur']),
 
-      categorieId: json['categorie'] != null
-          ? json['categorie']['id']
+      categorie: json['categorie'] != null
+          ? Category.fromJson(json['categorie'])
           : null,
     );
   }
@@ -55,8 +56,8 @@ class Course {
       'statut': statut,
       'dateCreation': dateCreation.toIso8601String(),
       'prix': prix,
-      'formateurId': formateurId,
-      'categorieId': categorieId,
+      'formateur': formateur.toJson(),
+      'categorie': categorie?.toJson(),
     };
   }
 }
