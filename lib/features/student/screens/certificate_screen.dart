@@ -1,119 +1,85 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../auth/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+import '../../../core/constants/app_colors.dart';
+import '../providers/student_provider.dart';
+import '../../models/Certificate.dart';
+import '../../../core/constants/BottomNavStudent.dart';
 
-// ══════════════════════════════════════
-// MODÈLE
-// ══════════════════════════════════════
-class CertificateModel {
-  final int    id;
-  final String titreCours;
-  final String nomFormateur;
-  final String categorie;
-  final String dateEmission;
-  final String codeVerification;
-  final int    dureeHeures;
-
-  const CertificateModel({
-    required this.id,
-    required this.titreCours,
-    required this.nomFormateur,
-    required this.dateEmission,
-    required this.codeVerification,
-    required this.categorie,
-    required this.dureeHeures,
-  });
-}
-
-// ══════════════════════════════════════
-// DONNÉES DE TEST
-// ══════════════════════════════════════
-const _mockCertificates = [
-  CertificateModel(
-    id:                1,
-    titreCours:        'Java Spring Boot — Débutant à Avancé',
-    nomFormateur:      'Karim Benali',
-    categorie:         'Informatique',
-    dateEmission:      '12 Mars 2024',
-    codeVerification:  'CERT-2024-HAMZA-SPB-001',
-    dureeHeures:       42,
-  ),
-  CertificateModel(
-    id:                2,
-    titreCours:        'Algèbre Linéaire',
-    nomFormateur:      'Fatima El Amrani',
-    categorie:         'Mathématiques',
-    dateEmission:      '28 Avril 2024',
-    codeVerification:  'CERT-2024-SARA-ALG-003',
-    dureeHeures:       30,
-  ),
-  CertificateModel(
-    id:                3,
-    titreCours:        'Base de Données SQL',
-    nomFormateur:      'Youssef Tahiri',
-    categorie:         'Base de données',
-    dateEmission:      '05 Mai 2024',
-    codeVerification:  'CERT-2024-LUCAS-SQL-004',
-    dureeHeures:       28,
-  ),
-];
-
-// ══════════════════════════════════════
-// PAGE PRINCIPALE
-// ══════════════════════════════════════
 class CertificateScreen extends StatefulWidget {
   const CertificateScreen({super.key});
 
   @override
-  State<CertificateScreen> createState() =>
-      _CertificateScreenState();
+  State<CertificateScreen> createState() => _CertificateScreenState();
 }
 
 class _CertificateScreenState extends State<CertificateScreen> {
   @override
-  Widget build(BuildContext context) {
-    final nom = context.watch<AuthProvider>().nom;
-    final prenom = context.watch<AuthProvider>().prenom;
-    final nomEtudiant = nom != null
-        ? '$nom $prenom'
-        : 'Étudiant';
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<StudentProvider>(context, listen: false).fetchCertificates();
+    });
+  }
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildSummaryBanner(),
-            Expanded(
-              child: _mockCertificates.isEmpty
-                  ? _buildEmpty()
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(
-                          20, 8, 20, 100),
-                      itemCount: _mockCertificates.length,
-                      itemBuilder: (_, i) => _CertificateCard(
-                        certificate:  _mockCertificates[i],
-                        nomEtudiant:  nomEtudiant,
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<StudentProvider>(
+      builder: (context, provider, _) {
+        final certs = provider.certificates;
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(context, certs.length),
+                _buildSummaryBanner(certs.length),
+
+                if (provider.isLoading)
+                  const Expanded(
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
                       ),
                     ),
+                  )
+                else if (provider.errorMessage != null)
+                  Expanded(
+                    child: _buildError(
+                      context,
+                      provider.errorMessage!,
+                      onRetry: provider.fetchCertificates,
+                    ),
+                  )
+                else if (certs.isEmpty)
+                  Expanded(child: _buildEmpty(context))
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+                      itemCount: certs.length,
+                      itemBuilder: (_, i) =>
+                          _CertificateCard(certificate: certs[i]),
+                    ),
+                  ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+          bottomNavigationBar: const BottomNavStudent(currentIndex: 3),
+        );
+      },
     );
   }
 
-  // ── Header ──
-  Widget _buildHeader() {
+  // ── Header ────────────────────────────────────────────────────────────────
+  Widget _buildHeader(BuildContext context, int count) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       decoration: const BoxDecoration(
         gradient: AppColors.primaryGradient,
         borderRadius: BorderRadius.only(
-          bottomLeft:  Radius.circular(28),
+          bottomLeft: Radius.circular(28),
           bottomRight: Radius.circular(28),
         ),
       ),
@@ -122,25 +88,14 @@ class _CertificateScreenState extends State<CertificateScreen> {
           Row(
             children: [
               GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  width: 36, height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
+                child: const Text(
+                  'Mes Certificats',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
-                  child: const Icon(
-                    Icons.arrow_back_ios_new,
-                    color: Colors.white, size: 16),
-                ),
-              ),
-              const SizedBox(width: 14),
-              const Text('Mes Certificats',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+                )
               ),
             ],
           ),
@@ -148,20 +103,24 @@ class _CertificateScreenState extends State<CertificateScreen> {
           Row(
             children: [
               Container(
-                width: 52, height: 52,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withOpacity(.2),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
                   Icons.workspace_premium_rounded,
-                  color: Colors.white, size: 28),
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 14),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Vos réussites',
+                  const Text(
+                    'Vos réussites',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -170,9 +129,8 @@ class _CertificateScreenState extends State<CertificateScreen> {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${_mockCertificates.length} certificat'
-                    '${_mockCertificates.length > 1 ? 's' : ''} obtenu'
-                    '${_mockCertificates.length > 1 ? 's' : ''}',
+                    '$count certificat${count > 1 ? 's' : ''}'
+                    ' obtenu${count > 1 ? 's' : ''}',
                     style: const TextStyle(
                       color: Color(0xFFBFDBFE),
                       fontSize: 13,
@@ -187,15 +145,11 @@ class _CertificateScreenState extends State<CertificateScreen> {
     );
   }
 
-  // ── Bannière résumé ──
-  Widget _buildSummaryBanner() {
-    final totalHeures = _mockCertificates.fold<int>(
-        0, (sum, c) => sum + c.dureeHeures);
-
+  // ── Summary banner ────────────────────────────────────────────────────────
+  Widget _buildSummaryBanner(int count) {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-      padding: const EdgeInsets.symmetric(
-          vertical: 14, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -203,39 +157,39 @@ class _CertificateScreenState extends State<CertificateScreen> {
       ),
       child: Row(
         children: [
-          _buildStatItem(
-            '${_mockCertificates.length}',
+          _statItem(
+            '$count',
             'Certificats',
             Icons.workspace_premium_outlined,
             AppColors.warning,
           ),
-          _buildDivider(),
-          _buildStatItem(
-            '$totalHeures h',
-            'Formation',
-            Icons.access_time_outlined,
-            AppColors.primary,
-          ),
-          _buildDivider(),
-          _buildStatItem(
+          _vDivider(),
+          _statItem(
             '100%',
             'Réussite',
             Icons.verified_outlined,
             AppColors.success,
+          ),
+          _vDivider(),
+          _statItem(
+            'Actif',
+            'Statut',
+            Icons.shield_outlined,
+            AppColors.primary,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(
-      String val, String label, IconData icon, Color color) {
+  Widget _statItem(String val, String label, IconData icon, Color color) {
     return Expanded(
       child: Column(
         children: [
           Icon(icon, color: color, size: 22),
           const SizedBox(height: 6),
-          Text(val,
+          Text(
+            val,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -243,40 +197,84 @@ class _CertificateScreenState extends State<CertificateScreen> {
             ),
           ),
           const SizedBox(height: 2),
-          Text(label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.textHint,
-            ),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: AppColors.textHint),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDivider() => Container(
-    width: 1, height: 40,
-    color: AppColors.border,
-  );
+  Widget _vDivider() =>
+      Container(width: 1, height: 40, color: AppColors.border);
 
-  // ── État vide ──
-  Widget _buildEmpty() {
+  // ── Error ─────────────────────────────────────────────────────────────────
+  Widget _buildError(
+    BuildContext context,
+    String message, {
+    required VoidCallback onRetry,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: AppColors.textSecond),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.refresh, color: Colors.white),
+              label: const Text(
+                'Réessayer',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Empty ─────────────────────────────────────────────────────────────────
+  Widget _buildEmpty(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 80, height: 80,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
               color: AppColors.primarySoft,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.workspace_premium_outlined,
-              color: AppColors.primary, size: 36),
+              color: AppColors.primary,
+              size: 36,
+            ),
           ),
           const SizedBox(height: 16),
-          const Text('Aucun certificat pour l\'instant',
+          const Text(
+            "Aucun certificat pour l'instant",
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -295,17 +293,17 @@ class _CertificateScreenState extends State<CertificateScreen> {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () =>
-                Navigator.pushNamed(context, '/student-courses'),
+            onPressed: () => Navigator.pushNamed(context, '/student-courses'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 28, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
               elevation: 0,
             ),
-            child: const Text('Voir mes cours',
+            child: const Text(
+              'Voir mes cours',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -318,24 +316,67 @@ class _CertificateScreenState extends State<CertificateScreen> {
   }
 }
 
-// ══════════════════════════════════════
-// CARTE CERTIFICAT
-// ══════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
+// CARTE
+// ══════════════════════════════════════════════════════════════════════════════
 class _CertificateCard extends StatelessWidget {
-  final CertificateModel certificate;
-  final String           nomEtudiant;
+  final Certificate certificate;
+  const _CertificateCard({required this.certificate});
 
-  const _CertificateCard({
-    required this.certificate,
-    required this.nomEtudiant,
-  });
+  // Deterministic accent color from course title
+  Color _accentColor() {
+    const colors = [
+      Color(0xFF4B5FCC),
+      Color(0xFF0F6E56),
+      Color(0xFFB7700F),
+      Color(0xFF993C1D),
+      Color(0xFF993556),
+      Color(0xFF3B6D11),
+    ];
+    return colors[certificate.courseTitle.length % colors.length];
+  }
+
+  Color _accentBg() {
+    const bgs = [
+      Color(0xFFEEF2FF),
+      Color(0xFFE1F5EE),
+      Color(0xFFFEF9EE),
+      Color(0xFFFAECE7),
+      Color(0xFFFBEAF0),
+      Color(0xFFEAF3DE),
+    ];
+    return bgs[certificate.courseTitle.length % bgs.length];
+  }
+
+  String _formattedDate() {
+    final d = certificate.issueDate;
+    const months = [
+      'Janvier',
+      'Février',
+      'Mars',
+      'Avril',
+      'Mai',
+      'Juin',
+      'Juillet',
+      'Août',
+      'Septembre',
+      'Octobre',
+      'Novembre',
+      'Décembre',
+    ];
+    return '${d.day} ${months[d.month - 1]} ${d.year}';
+  }
+
+  // ignore: unused_element
+  String _initial() {
+    final t = certificate.courseTitle.trim();
+    return t.isNotEmpty ? t[0].toUpperCase() : 'C';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final catColor = AppColors.colorForCategory(
-        certificate.categorie);
-    final catBg    = AppColors.bgForCategory(
-        certificate.categorie);
+    final accent = _accentColor();
+    final accentBg = _accentBg();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -346,76 +387,50 @@ class _CertificateCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-
-          // ── Visuel certificat ──
-          _buildCertVisual(catColor, catBg),
-
-          // ── Infos ──
+          _buildVisual(accent, accentBg),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-                // Titre cours
-                Text(certificate.titreCours,
+                // Course title
+                Text(
+                  certificate.courseTitle,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 8),
-
-                // Formateur
-                Row(
-                  children: [
-                    const Icon(Icons.person_outline,
-                      size: 15, color: AppColors.textHint),
-                    const SizedBox(width: 5),
-                    Text(certificate.nomFormateur,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecond,
-                      ),
-                    ),
-                    const Spacer(),
-                    const Icon(Icons.access_time_outlined,
-                      size: 15, color: AppColors.textHint),
-                    const SizedBox(width: 4),
-                    Text('${certificate.dureeHeures}h',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecond,
-                      ),
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 10),
 
-                // Date + Catégorie
+                // Student + date row
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: catBg,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(certificate.categorie,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: catColor,
+                    const Icon(
+                      Icons.person_outline,
+                      size: 15,
+                      color: AppColors.textHint,
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        certificate.studentName,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecond,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const Spacer(),
-                    const Icon(Icons.calendar_today_outlined,
-                      size: 13, color: AppColors.textHint),
+                    const Icon(
+                      Icons.calendar_today_outlined,
+                      size: 13,
+                      color: AppColors.textHint,
+                    ),
                     const SizedBox(width: 4),
-                    Text(certificate.dateEmission,
+                    Text(
+                      _formattedDate(),
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecond,
@@ -425,10 +440,12 @@ class _CertificateCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // Code vérification
+                // Verification code
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.background,
                     borderRadius: BorderRadius.circular(10),
@@ -436,57 +453,58 @@ class _CertificateCard extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.qr_code_outlined,
-                        size: 16, color: AppColors.textHint),
+                      const Icon(
+                        Icons.qr_code_outlined,
+                        size: 16,
+                        color: AppColors.textHint,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          certificate.codeVerification,
+                          certificate.verificationCode,
                           style: const TextStyle(
                             fontSize: 11,
                             color: AppColors.textSecond,
                             fontFamily: 'monospace',
-                            letterSpacing: 0.5,
+                            letterSpacing: .5,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => _copyCode(
-                            context,
-                            certificate.codeVerification),
-                        child: const Icon(Icons.copy_outlined,
-                          size: 16, color: AppColors.primary),
+                        onTap: () =>
+                            _copyCode(context, certificate.verificationCode),
+                        child: const Icon(
+                          Icons.copy_outlined,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 14),
 
-                // Boutons actions
+                // Actions
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () =>
-                            _showCertificateDetail(
-                                context, certificate,
-                                nomEtudiant),
+                        onPressed: () => _showDetail(context, accent, accentBg),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(
-                              color: AppColors.border),
+                          side: const BorderSide(color: AppColors.border),
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(10)),
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 10),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                         icon: const Icon(
                           Icons.visibility_outlined,
                           size: 16,
                           color: AppColors.textSecond,
                         ),
-                        label: const Text('Voir',
+                        label: const Text(
+                          'Voir',
                           style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textSecond,
@@ -497,23 +515,22 @@ class _CertificateCard extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () =>
-                            _downloadCertificate(context),
+                        onPressed: () => _download(context),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(10)),
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 10),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                         icon: const Icon(
                           Icons.download_outlined,
                           size: 16,
                           color: Colors.white,
                         ),
-                        label: const Text('Télécharger',
+                        label: const Text(
+                          'Télécharger',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.white,
@@ -532,46 +549,39 @@ class _CertificateCard extends StatelessWidget {
     );
   }
 
-  // ── Visuel certificat ──
-  Widget _buildCertVisual(Color catColor, Color catBg) {
+  // ── Visual banner ─────────────────────────────────────────────────────────
+  Widget _buildVisual(Color accent, Color accentBg) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            catColor.withOpacity(0.12),
-            catColor.withOpacity(0.04),
-          ],
-        ),
+        color: accent.withOpacity(.06),
         borderRadius: const BorderRadius.only(
-          topLeft:  Radius.circular(20),
+          topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
         ),
-        border: Border(
-          bottom: BorderSide(color: AppColors.border),
-        ),
+        border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Column(
         children: [
-          // Icône médaille
+          // Medal icon
           Container(
-            width: 56, height: 56,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
-              color: catColor.withOpacity(0.15),
+              color: accent.withOpacity(.15),
               shape: BoxShape.circle,
-              border: Border.all(
-                color: catColor.withOpacity(0.3),
-                width: 2),
+              border: Border.all(color: accent.withOpacity(.3), width: 2),
             ),
             child: Icon(
               Icons.workspace_premium_rounded,
-              color: catColor, size: 28),
+              color: accent,
+              size: 28,
+            ),
           ),
           const SizedBox(height: 10),
-          const Text('CERTIFICAT DE RÉUSSITE',
+          const Text(
+            'CERTIFICAT DE RÉUSSITE',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
@@ -579,65 +589,47 @@ class _CertificateCard extends StatelessWidget {
               letterSpacing: 1.5,
             ),
           ),
-          const SizedBox(height: 4),
-          Text('Ce certificat est décerné à',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.textHint,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(nomEtudiant,
+          const SizedBox(height: 6),
+          Text(
+            certificate.studentName,
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
-              color: catColor,
+              color: accent,
             ),
           ),
-          const SizedBox(height: 2),
-          const Text('pour avoir complété avec succès',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.textHint,
-            ),
-          ),
-
-          // Séparateur décoratif
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Row(
               children: [
-                Expanded(child: Divider(
-                  color: catColor.withOpacity(0.3))),
+                Expanded(child: Divider(color: accent.withOpacity(.3))),
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8),
-                  child: Icon(Icons.star_rounded,
-                    color: catColor, size: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Icon(Icons.star_rounded, color: accent, size: 14),
                 ),
-                Expanded(child: Divider(
-                  color: catColor.withOpacity(0.3))),
+                Expanded(child: Divider(color: accent.withOpacity(.3))),
               ],
             ),
           ),
-
-          // Badge vérifié
+          // Verified badge
           Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 12, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
               color: AppColors.successSoft,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                  color: AppColors.success.withOpacity(0.3)),
+              border: Border.all(color: AppColors.success.withOpacity(.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.verified_rounded,
-                  color: AppColors.success, size: 14),
-                const SizedBox(width: 5),
-                const Text('Certifié & Vérifié',
+              children: const [
+                Icon(
+                  Icons.verified_rounded,
+                  color: AppColors.success,
+                  size: 14,
+                ),
+                SizedBox(width: 5),
+                Text(
+                  'Certifié & Vérifié',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -652,15 +644,14 @@ class _CertificateCard extends StatelessWidget {
     );
   }
 
-  // ── Copier le code ──
+  // ── Helpers ───────────────────────────────────────────────────────────────
   void _copyCode(BuildContext context, String code) {
     Clipboard.setData(ClipboardData(text: code));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Row(
           children: [
-            Icon(Icons.check_circle_outline,
-              color: Colors.white, size: 18),
+            Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
             SizedBox(width: 8),
             Text('Code copié dans le presse-papiers'),
           ],
@@ -668,23 +659,24 @@ class _CertificateCard extends StatelessWidget {
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 2),
       ),
     );
   }
 
-  // ── Télécharger ──
-  void _downloadCertificate(BuildContext context) {
+  void _download(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Row(
           children: [
             SizedBox(
-              width: 18, height: 18,
+              width: 18,
+              height: 18,
               child: CircularProgressIndicator(
-                color: Colors.white, strokeWidth: 2),
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
             ),
             SizedBox(width: 10),
             Text('Téléchargement en cours...'),
@@ -693,31 +685,23 @@ class _CertificateCard extends StatelessWidget {
         backgroundColor: AppColors.primary,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 2),
       ),
     );
   }
 
-  // ── Modal détail certificat ──
-  void _showCertificateDetail(
-    BuildContext context,
-    CertificateModel cert,
-    String nomEtudiant,
-  ) {
-    final catColor = AppColors.colorForCategory(cert.categorie);
-
+  void _showDetail(BuildContext context, Color accent, Color accentBg) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => Container(
-        height: MediaQuery.of(context).size.height * 0.85,
+        height: MediaQuery.of(context).size.height * 0.82,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(
-            topLeft:  Radius.circular(24),
+            topLeft: Radius.circular(24),
             topRight: Radius.circular(24),
           ),
         ),
@@ -726,21 +710,21 @@ class _CertificateCard extends StatelessWidget {
             // Handle
             Container(
               margin: const EdgeInsets.only(top: 12),
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
                 color: AppColors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(height: 16),
-
-            // Header modal
+            // Modal header
             Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  const Text('Détail du certificat',
+                  const Text(
+                    'Détail du certificat',
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -751,47 +735,43 @@ class _CertificateCard extends StatelessWidget {
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
-                      width: 32, height: 32,
+                      width: 32,
+                      height: 32,
                       decoration: BoxDecoration(
                         color: AppColors.background,
-                        borderRadius:
-                            BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.close,
+                      child: const Icon(
+                        Icons.close,
                         size: 18,
-                        color: AppColors.textSecond),
+                        color: AppColors.textSecond,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    // Visuel certificat grand format
+                    // Full visual
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            catColor.withOpacity(0.1),
-                            catColor.withOpacity(0.03),
-                          ],
-                        ),
-                        borderRadius:
-                            BorderRadius.circular(20),
-                        border: Border.all(
-                          color: catColor.withOpacity(0.2)),
+                        color: accent.withOpacity(.06),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: accent.withOpacity(.2)),
                       ),
                       child: Column(
                         children: [
                           Icon(
                             Icons.workspace_premium_rounded,
-                            color: catColor, size: 52),
+                            color: accent,
+                            size: 52,
+                          ),
                           const SizedBox(height: 12),
                           const Text(
                             'CERTIFICAT DE RÉUSSITE',
@@ -803,11 +783,12 @@ class _CertificateCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Text(nomEtudiant,
+                          Text(
+                            certificate.studentName,
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: catColor,
+                              color: accent,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -819,7 +800,8 @@ class _CertificateCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Text(cert.titreCours,
+                          Text(
+                            certificate.courseTitle,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 16,
@@ -832,36 +814,30 @@ class _CertificateCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
 
-                    // Détails
+                    // Detail rows — exactly the 4 fields we have
                     _detailRow(
                       Icons.person_outline,
-                      'Formateur',
-                      cert.nomFormateur,
+                      'Étudiant',
+                      certificate.studentName,
                     ),
                     _detailRow(
-                      Icons.category_outlined,
-                      'Catégorie',
-                      cert.categorie,
+                      Icons.menu_book_outlined,
+                      'Cours',
+                      certificate.courseTitle,
                     ),
                     _detailRow(
                       Icons.calendar_today_outlined,
-                      'Date d\'émission',
-                      cert.dateEmission,
-                    ),
-                    _detailRow(
-                      Icons.access_time_outlined,
-                      'Durée de formation',
-                      '${cert.dureeHeures} heures',
+                      "Date d'émission",
+                      _formattedDate(),
                     ),
                     _detailRow(
                       Icons.qr_code_outlined,
                       'Code de vérification',
-                      cert.codeVerification,
+                      certificate.verificationCode,
                       isCode: true,
                     ),
-                    const SizedBox(height: 20),
 
-                    // Bouton partager
+                    const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -871,12 +847,16 @@ class _CertificateCard extends StatelessWidget {
                           backgroundColor: AppColors.primary,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(14)),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
-                        icon: const Icon(Icons.share_outlined,
-                          color: Colors.white, size: 18),
-                        label: const Text('Partager',
+                        icon: const Icon(
+                          Icons.share_outlined,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        label: const Text(
+                          'Partager',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -896,12 +876,14 @@ class _CertificateCard extends StatelessWidget {
   }
 
   Widget _detailRow(
-      IconData icon, String label, String value,
-      {bool isCode = false}) {
+    IconData icon,
+    String label,
+    String value, {
+    bool isCode = false,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(
-          horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
@@ -911,27 +893,30 @@ class _CertificateCard extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: AppColors.textHint),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textHint,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textHint,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(value,
-                style: TextStyle(
-                  fontSize: isCode ? 11 : 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textPrimary,
-                  fontFamily:
-                      isCode ? 'monospace' : null,
-                  letterSpacing: isCode ? 0.5 : 0,
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: isCode ? 11 : 13,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                    fontFamily: isCode ? 'monospace' : null,
+                    letterSpacing: isCode ? .5 : 0,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
