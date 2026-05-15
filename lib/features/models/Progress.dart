@@ -6,6 +6,8 @@ class Progress {
   final int etudiantId;
   final int lessonId;
 
+  var completed;
+
   Progress({
     this.id,
     this.termine = false,

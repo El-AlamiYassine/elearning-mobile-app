@@ -1,4 +1,5 @@
 import 'dart:core';
+import 'package:elearning/features/models/Lesson.dart';
 import 'package:elearning/features/student/models/Category.dart';
 import 'package:elearning/features/student/models/CourseProgress.dart';
 import 'package:elearning/features/student/models/Course.dart';
@@ -72,8 +73,7 @@ class StudentProvider extends ChangeNotifier {
 
       print('Categories fetched: $categories');
     } catch (e) {
-      errorMessage =
-          'Erreur lors du chargement des catégories.';
+      errorMessage = 'Erreur lors du chargement des catégories.';
     } finally {
       isLoading = false;
 
@@ -87,9 +87,7 @@ class StudentProvider extends ChangeNotifier {
       errorMessage = null;
       notifyListeners();
 
-      allCourses = await _studentService.getAllCourses(
-        categoryId: categoryId,
-      );
+      allCourses = await _studentService.getAllCourses(categoryId: categoryId);
     } catch (e) {
       errorMessage = 'Erreur lors du chargement des cours.';
     } finally {
@@ -110,6 +108,37 @@ class StudentProvider extends ChangeNotifier {
       errorMessage = 'Erreur lors du chargement des certificats.';
     } finally {
       isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<List<Lesson>> fetchLessonsByCourse(int courseId) async {
+    try {
+      return await _studentService.getLessonsByCourse(courseId);
+    } catch (e) {
+      errorMessage = 'Erreur lors du chargement des leçons.';
+      notifyListeners();
+      return [];
+    }
+  }
+
+  Future<Lesson?> fetchLessonDetails(int lessonId) async {
+    try {
+      return await _studentService.getLessonDetails(lessonId);
+    } catch (e) {
+      errorMessage = 'Erreur lors du chargement des détails de la leçon.';
+      notifyListeners();
+      return null;
+    }
+  }
+
+  Future<void> markLessonCompleted(int lessonId) async {
+    try {
+      await _studentService.markLessonCompleted(lessonId);
+      // Optionally, refresh the course progress or lesson details
+      await fetchDashboardData();
+    } catch (e) {
+      errorMessage = 'Erreur lors de la mise à jour de la leçon.';
       notifyListeners();
     }
   }

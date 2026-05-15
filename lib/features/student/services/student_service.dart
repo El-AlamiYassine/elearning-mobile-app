@@ -4,10 +4,8 @@ import 'package:elearning/features/models/Certificate.dart';
 import 'package:elearning/features/student/models/Category.dart';
 import '../../../core/services/api_service.dart';
 import '../models/StudentSummary.dart';
-// ignore: unused_import
 import '../models/Course.dart';
-// ignore: duplicate_import
-import '../models/Category.dart';
+import '../../models/Lesson.dart';
 
 class StudentService {
   final ApiService _apiService = ApiService();
@@ -51,9 +49,7 @@ class StudentService {
     try {
       final response = await _apiService.dio.get(
         '/student/catalog',
-        queryParameters: categoryId != null
-            ? {'categoryId': categoryId}
-            : null,
+        queryParameters: categoryId != null ? {'categoryId': categoryId} : null,
       );
 
       if (response.statusCode == 200) {
@@ -83,6 +79,59 @@ class StudentService {
     } catch (e) {
       print('Error fetching certificates: $e');
       return [];
+    }
+  }
+
+  Future<List<Lesson>> getLessonsByCourse(int courseId) async {
+    try {
+      final response = await _apiService.dio.get(
+        '/student/courses/$courseId/lessons',
+      );
+
+      if (response.statusCode == 200) {
+        final List data = response.data;
+        print('Lessons data: $data');
+        return data.map((json) => Lesson.fromJson(json)).toList();
+      }
+
+      return [];
+    } catch (e) {
+      print('Error fetching lessons: $e');
+      return [];
+    }
+  }
+
+  Future<Lesson?> getLessonDetails(int lessonId) async {
+    try {
+      final response = await _apiService.dio.get('/student/lessons/$lessonId');
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        print('Lesson details data:');
+        return Lesson.fromJson(data);
+      }
+
+      return null;
+    } catch (e) {
+      print('Error fetching lesson details: $e');
+      return null;
+    }
+  }
+
+  Future<bool> markLessonCompleted(int lessonId) async {
+    try {
+      final response = await _apiService.dio.post(
+        '/student/lessons/$lessonId/complete',
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      print('Error marking lesson as completed: $e');
+      return false;
     }
   }
 }

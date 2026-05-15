@@ -1,6 +1,7 @@
 import 'Document.dart';
 import 'Quiz.dart';
 import 'Progress.dart';
+
 class Lesson {
   final int? id;
   final String titre;
@@ -8,11 +9,16 @@ class Lesson {
   final String? videoUrl;
   final int ordre;
 
-  final int courseId;
+  final int? courseId;
 
   final List<Document>? documents;
   final Quiz? quiz;
   final List<Progress>? progresses;
+
+  // extra backend fields
+  final bool completed;
+  final bool hasQuiz;
+  final int? quizId;
 
   Lesson({
     this.id,
@@ -20,31 +26,46 @@ class Lesson {
     this.contenu,
     this.videoUrl,
     this.ordre = 1,
-    required this.courseId,
+    this.courseId,
     this.documents,
     this.quiz,
     this.progresses,
+    this.completed = false,
+    this.hasQuiz = false,
+    this.quizId,
   });
 
   factory Lesson.fromJson(Map<String, dynamic> json) {
     return Lesson(
       id: json['id'],
-      titre: json['titre'],
-      contenu: json['contenu'],
+
+      // ✅ backend uses title
+      titre: json['title'] ?? '',
+
+      // ✅ backend uses content
+      contenu: json['content'],
+
       videoUrl: json['videoUrl'],
+
       ordre: json['ordre'] ?? 1,
 
-      // backend: cours object → on récupère juste l'id
-      courseId: json['cours'] != null ? json['cours']['id'] : json['courseId'],
+      courseId: json['courseId'],
 
-      // relations souvent ignorées ou chargées séparément
+      completed: json['completed'] ?? false,
+
+      hasQuiz: json['hasQuiz'] ?? false,
+
+      quizId: json['quizId'],
+
       documents: json['documents'] != null
           ? (json['documents'] as List)
               .map((e) => Document.fromJson(e))
               .toList()
           : null,
 
-      quiz: json['quiz'] != null ? Quiz.fromJson(json['quiz']) : null,
+      quiz: json['quiz'] != null
+          ? Quiz.fromJson(json['quiz'])
+          : null,
 
       progresses: json['progresses'] != null
           ? (json['progresses'] as List)
@@ -57,8 +78,8 @@ class Lesson {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'titre': titre,
-      'contenu': contenu,
+      'title': titre,
+      'content': contenu,
       'videoUrl': videoUrl,
       'ordre': ordre,
       'courseId': courseId,

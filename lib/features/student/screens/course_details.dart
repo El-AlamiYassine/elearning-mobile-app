@@ -1,5 +1,8 @@
+import 'package:elearning/features/student/providers/student_provider.dart';
+import 'package:elearning/features/student/screens/CourseLessonsPage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../models/CourseProgress.dart';
 import '../../../core/constants/colors.dart' as _C;
 class CourseDetailPage extends StatelessWidget {
@@ -8,6 +11,7 @@ class CourseDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final viewModel = context.read<StudentProvider>();
     final pct = course.progressPercentage.clamp(0, 100);
     return Scaffold(
       backgroundColor: _C.Colors.pageBg,
@@ -129,7 +133,19 @@ class CourseDetailPage extends StatelessWidget {
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CourseLessonsPage(
+                              course: course,
+                              fetchLessons: (id) => viewModel.fetchLessonsByCourse(id),
+                              fetchLessonDetails: (int lessonId) => viewModel.fetchLessonDetails(lessonId),
+                              markLessonCompleted: (int lessonId) => viewModel.markLessonCompleted(lessonId),
+                            ),
+                          ),
+                        );
+                      },
                       icon: const Icon(Icons.play_arrow_rounded),
                       label: Text(
                         pct == 0 ? 'Commencer le cours' : 'Continuer',
