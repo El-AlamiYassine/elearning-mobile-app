@@ -134,4 +134,21 @@ class StudentService {
       return false;
     }
   }
+
+  Future <bool> enrollInCourse(int courseId) async {
+    try {
+      final response = await _apiService.dio.post(
+        '/student/courses/$courseId/enroll',
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      print('Error enrolling in course: $e');
+      return false;
+    }
+  }
 }

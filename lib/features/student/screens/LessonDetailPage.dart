@@ -37,15 +37,23 @@ class _LessonDetailPageState extends State<LessonDetailPage> {
   final Map<int, bool> _markingMap = {}; // lessonId → en cours de marquage
 
   @override
+  @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
 
-    // Pré-remplir depuis les IDs déjà connus (passés par CourseLessonsPage)
+    // From parent-passed IDs
     _completedIds.addAll(widget.initialCompletedIds);
 
-    // Fusionner aussi les progresses embarquées dans les leçons
+    // From lesson.completed field (backend)
+    for (final lesson in widget.lessons) {
+      if (lesson.id != null && lesson.completed) {
+        _completedIds.add(lesson.id!);
+      }
+    }
+
+    // From embedded progresses
     for (final lesson in widget.lessons) {
       if (lesson.id != null &&
           lesson.progresses != null &&
@@ -398,13 +406,15 @@ class _LessonPage extends StatelessWidget {
                   _LessonContent(lesson: lesson),
 
                 // ── Mark as completed button ────────────────────
-                const SizedBox(height: 8),
-                _MarkCompletedButton(
-                  isCompleted: isCompleted,
-                  isMarking: isMarking,
-                  onTap: onMarkCompleted,
-                ),
-                const SizedBox(height: 8),
+                if (!isCompleted) ...[
+                  const SizedBox(height: 8),
+                  _MarkCompletedButton(
+                    isCompleted: isCompleted,
+                    isMarking: isMarking,
+                    onTap: onMarkCompleted,
+                  ),
+                  const SizedBox(height: 8),
+                ],
               ],
             ),
           ),

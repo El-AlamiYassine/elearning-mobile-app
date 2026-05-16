@@ -38,10 +38,9 @@ class _CourseLessonsPageState extends State<CourseLessonsPage> {
     final lessons = await widget.fetchLessons(widget.course.id);
 
     final Set<int> newCompleted = {};
-
-   for (final l in lessons) {
+    for (final l in lessons) {
       if (l.id != null && l.completed == true) {
-        _localCompletedIds.add(l.id!);
+        newCompleted.add(l.id!);  // ← fill the right set
       }
     }
 
@@ -50,13 +49,13 @@ class _CourseLessonsPageState extends State<CourseLessonsPage> {
         _localCompletedIds
           ..clear()
           ..addAll(newCompleted);
-
         _lessonsFuture = Future.value(lessons);
       });
     }
   }
   Future<void> _openLessons(List<Lesson> lessons, int index) async {
     // Retourne Set<int> des nouveaux IDs complétés pendant la session
+    // ignore: unused_local_variable
     final result = await Navigator.push<Set<int>>(
       context,
       MaterialPageRoute(
@@ -288,11 +287,11 @@ class _CourseLessonsPageState extends State<CourseLessonsPage> {
                     (context, index) {
                       final lesson = lessons[index];
 
-                      final bool isCompleted = lesson.completed == true;
+                      final bool isCompleted = lesson.id != null && _localCompletedIds.contains(lesson.id);
 
                       // Déverrouillée si première, ou si la précédente est complétée
-                      final bool isLocked =
-                      index > 0 && lessons[index - 1].completed != true;
+                      final bool isLocked = index > 0 &&
+                        !_localCompletedIds.contains(lessons[index - 1].id);
 
                       return _LessonTile(
                         lesson: lesson,
